@@ -75,14 +75,26 @@ export default function HeroSequence() {
       ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
     };
 
+    // Detect device mode accurately
+    const checkIsMobile = () => {
+      if (typeof window === "undefined") return false;
+      return (
+        window.matchMedia("(max-width: 768px)").matches ||
+        window.innerWidth < 768 ||
+        window.innerWidth < window.innerHeight ||
+        /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+      );
+    };
+
+    let currentFolder = checkIsMobile() ? "mobile" : "desktop";
+
     // Parallel load images from desktop or mobile folder
-    const loadImages = async () => {
+    const loadImages = async (folderName: string) => {
+      setLoaded(false);
+      setLoadingProgress(0);
       let loadedCount = 0;
       const images: (HTMLImageElement | null)[] = new Array(FRAME_COUNT).fill(null);
       const promises: Promise<void>[] = [];
-
-      const isMobileDevice = window.innerWidth < 768 || (window.innerWidth / window.innerHeight) < 1.1;
-      const folder = isMobileDevice ? "mobile" : "desktop";
 
       for (let i = 0; i < FRAME_COUNT; i++) {
         const frameNumber = i + FRAME_START;
@@ -97,30 +109,13 @@ export default function HeroSequence() {
             resolve();
           };
           img.onerror = () => {
-            // Fallback to desktop frame if mobile frame is not found
-            if (folder === "mobile") {
-              const fallbackImg = new Image();
-              fallbackImg.onload = () => {
-                images[i] = fallbackImg;
-                loadedCount++;
-                setLoadingProgress(Math.round((loadedCount / FRAME_COUNT) * 100));
-                resolve();
-              };
-              fallbackImg.onerror = () => {
-                loadedCount++;
-                setLoadingProgress(Math.round((loadedCount / FRAME_COUNT) * 100));
-                resolve();
-              };
-              fallbackImg.src = `/frames/desktop/video_frame_${paddedNumber}.webp`;
-            } else {
-              loadedCount++;
-              setLoadingProgress(Math.round((loadedCount / FRAME_COUNT) * 100));
-              resolve();
-            }
+            loadedCount++;
+            setLoadingProgress(Math.round((loadedCount / FRAME_COUNT) * 100));
+            resolve();
           };
         });
 
-        img.src = `/frames/${folder}/video_frame_${paddedNumber}.webp`;
+        img.src = `/frames/${folderName}/video_frame_${paddedNumber}.webp`;
         promises.push(p);
       }
 
@@ -135,12 +130,18 @@ export default function HeroSequence() {
       });
     };
 
-    loadImages();
+    loadImages(currentFolder);
 
-    // Resize handler
+    // Resize handler with mode switching if breakpoint changes
     const handleResize = () => {
-      const currentIndex = Math.round(scrollObj.frame);
-      renderFrame(currentIndex);
+      const newFolder = checkIsMobile() ? "mobile" : "desktop";
+      if (newFolder !== currentFolder) {
+        currentFolder = newFolder;
+        loadImages(newFolder);
+      } else {
+        const currentIndex = Math.round(scrollObj.frame);
+        renderFrame(currentIndex);
+      }
     };
 
     window.addEventListener("resize", handleResize);

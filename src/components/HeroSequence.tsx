@@ -126,12 +126,15 @@ export default function HeroSequence() {
       await Promise.all(promises);
 
       imagesRef.current = images;
-      setLoaded(true);
+      setLoadingProgress(100);
       
-      requestAnimationFrame(() => {
-        renderFrame(0);
-        ScrollTrigger.refresh();
-      });
+      setTimeout(() => {
+        setLoaded(true);
+        requestAnimationFrame(() => {
+          renderFrame(0);
+          ScrollTrigger.refresh();
+        });
+      }, 350);
     };
 
     loadImages(currentFolder);
@@ -179,14 +182,94 @@ export default function HeroSequence() {
       ref={containerRef} 
       className="relative w-full h-screen overflow-hidden bg-[#06090e]"
     >
-      {/* Minimal Loader */}
+      {/* Liquid Glass Loader - Fixed Perfectly Centered */}
       {!loaded && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#06090e]">
-          <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-[#00e5ff] transition-all duration-150 ease-out shadow-[0_0_12px_#00e5ff]"
-              style={{ width: `${loadingProgress}%` }}
-            />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-md transition-opacity duration-700">
+          {/* Dynamic Ambient Fluid Glow Orbs behind the Glass */}
+          <div className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-[#00e5ff]/25 blur-[100px] pointer-events-none animate-pulse" />
+          <div className="absolute w-72 h-72 sm:w-96 sm:h-96 rounded-full bg-[#9d4edd]/25 blur-[100px] pointer-events-none animate-pulse delay-1000" />
+
+          {/* Main Liquid Glass Container */}
+          <div className="relative flex flex-col items-center px-8 py-9 sm:px-10 sm:py-10 rounded-[36px] bg-white/[0.07] backdrop-blur-2xl border border-white/20 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8),inset_0_1.5px_2px_rgba(255,255,255,0.5),inset_0_-1px_2px_rgba(0,0,0,0.3)] max-w-[320px] sm:max-w-[360px] w-full mx-5 overflow-hidden">
+            
+            {/* Specular Edge Highlights */}
+            <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/70 to-transparent" />
+            <div className="absolute -top-16 -left-16 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none" />
+
+            {/* Liquid Glass Circular Gauge */}
+            <div className="relative w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center my-2">
+              {/* Circular SVG Progress Ring */}
+              <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 120 120">
+                <defs>
+                  <linearGradient id="liquidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#00e5ff" />
+                    <stop offset="50%" stopColor="#38bdf8" />
+                    <stop offset="100%" stopColor="#c084fc" />
+                  </linearGradient>
+                  <filter id="liquidGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                {/* Inactive Track Ring */}
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="48"
+                  className="text-white/10"
+                  stroke="currentColor"
+                  strokeWidth="5"
+                  fill="transparent"
+                />
+
+                {/* Glowing Liquid Progress Ring */}
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="48"
+                  stroke="url(#liquidGrad)"
+                  strokeWidth="6"
+                  strokeDasharray={301.6}
+                  strokeDashoffset={301.6 - (301.6 * loadingProgress) / 100}
+                  strokeLinecap="round"
+                  fill="transparent"
+                  filter="url(#liquidGlow)"
+                  className="transition-all duration-200 ease-out"
+                />
+              </svg>
+
+              {/* Center Counter */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-[#00e5ff] shadow-[0_0_8px_#00e5ff] mb-1 animate-pulse" />
+                <div className="flex items-baseline">
+                  <span className="text-4xl sm:text-5xl font-bold tracking-tight text-white font-sans drop-shadow-[0_2px_12px_rgba(255,255,255,0.4)]">
+                    {loadingProgress}
+                  </span>
+                  <span className="text-lg sm:text-xl font-light text-[#00e5ff] ml-0.5">
+                    %
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Liquid Horizontal Shimmer Capsule Tube */}
+            <div className="w-full h-2 bg-black/40 rounded-full p-[1px] border border-white/15 overflow-hidden relative shadow-inner mt-4">
+              <div 
+                className="h-full rounded-full bg-gradient-to-r from-[#00e5ff] via-[#38bdf8] to-[#c084fc] transition-all duration-200 ease-out shadow-[0_0_12px_rgba(0,229,255,0.7)] relative"
+                style={{ width: `${loadingProgress}%` }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-shimmer" />
+              </div>
+            </div>
+
+            {/* Minimal Subtitle */}
+            <div className="mt-4 text-[11px] font-medium tracking-[0.22em] text-white/60 uppercase">
+              Wczytywanie...
+            </div>
           </div>
         </div>
       )}

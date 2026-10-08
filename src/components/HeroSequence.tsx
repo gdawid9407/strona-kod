@@ -67,8 +67,12 @@ export default function HeroSequence() {
 
       ctx.clearRect(0, 0, width, height);
 
-      // Cover scaling for full pixel clarity on both desktop & mobile
-      const scale = Math.max(width / img.width, height / img.height);
+      // Use contain (Math.min) on mobile portrait so the whole image fits inside the phone frame without overflowing, cover (Math.max) on desktop
+      const isMobile = (width / height) < 1.1;
+      const scale = isMobile 
+        ? Math.min(width / img.width, height / img.height)
+        : Math.max(width / img.width, height / img.height);
+
       const x = (width - img.width * scale) / 2;
       const y = (height - img.height * scale) / 2;
 

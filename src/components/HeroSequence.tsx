@@ -7,7 +7,7 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const FRAME_COUNT = 239;
+const FRAME_COUNT = 240;
 const FRAME_START = 1;
 
 export default function HeroSequence() {
@@ -67,7 +67,7 @@ export default function HeroSequence() {
 
       ctx.clearRect(0, 0, width, height);
 
-      // Perfect object-fit: cover scaling
+      // Cover scaling for full pixel clarity on both desktop & mobile
       const scale = Math.max(width / img.width, height / img.height);
       const x = (width - img.width * scale) / 2;
       const y = (height - img.height * scale) / 2;
@@ -75,11 +75,14 @@ export default function HeroSequence() {
       ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
     };
 
-    // Parallel load images
+    // Parallel load images from desktop or mobile folder
     const loadImages = async () => {
       let loadedCount = 0;
       const images: (HTMLImageElement | null)[] = new Array(FRAME_COUNT).fill(null);
       const promises: Promise<void>[] = [];
+
+      const isMobileDevice = window.innerWidth < 768 || (window.innerWidth / window.innerHeight) < 1.1;
+      const folder = isMobileDevice ? "mobile" : "desktop";
 
       for (let i = 0; i < FRAME_COUNT; i++) {
         const frameNumber = i + FRAME_START;
@@ -94,13 +97,30 @@ export default function HeroSequence() {
             resolve();
           };
           img.onerror = () => {
-            loadedCount++;
-            setLoadingProgress(Math.round((loadedCount / FRAME_COUNT) * 100));
-            resolve();
+            // Fallback to desktop frame if mobile frame is not found
+            if (folder === "mobile") {
+              const fallbackImg = new Image();
+              fallbackImg.onload = () => {
+                images[i] = fallbackImg;
+                loadedCount++;
+                setLoadingProgress(Math.round((loadedCount / FRAME_COUNT) * 100));
+                resolve();
+              };
+              fallbackImg.onerror = () => {
+                loadedCount++;
+                setLoadingProgress(Math.round((loadedCount / FRAME_COUNT) * 100));
+                resolve();
+              };
+              fallbackImg.src = `/frames/desktop/video_frame_${paddedNumber}.webp`;
+            } else {
+              loadedCount++;
+              setLoadingProgress(Math.round((loadedCount / FRAME_COUNT) * 100));
+              resolve();
+            }
           };
         });
 
-        img.src = `/frames/video_frame_${paddedNumber}.webp`;
+        img.src = `/frames/${folder}/video_frame_${paddedNumber}.webp`;
         promises.push(p);
       }
 
@@ -154,20 +174,14 @@ export default function HeroSequence() {
       ref={containerRef} 
       className="relative w-full h-screen overflow-hidden bg-[#06090e]"
     >
-      {/* Loader */}
+      {/* Minimal Loader */}
       {!loaded && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#06090e]">
-          <div className="text-[#00e5ff] font-sans text-xl mb-4 tracking-widest uppercase font-semibold">
-            Inicjalizacja
-          </div>
-          <div className="w-64 h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
             <div 
               className="h-full bg-[#00e5ff] transition-all duration-150 ease-out shadow-[0_0_12px_#00e5ff]"
               style={{ width: `${loadingProgress}%` }}
             />
-          </div>
-          <div className="mt-3 text-xs text-gray-400 font-mono tracking-wider">
-            {loadingProgress}%
           </div>
         </div>
       )}
